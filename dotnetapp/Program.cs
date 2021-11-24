@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using Hangfire;
+using Hangfire.Annotations;
+using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,6 +23,8 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -33,6 +38,18 @@ app.MapHealthChecks("/health");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.UseHangfireDashboard();
+app.UseHangfireDashboard(options: new DashboardOptions()
+{
+    Authorization = new List<IDashboardAuthorizationFilter>() { new MyDashboardAuthorizationFilter() },
+    IgnoreAntiforgeryToken = true
+});
 
 app.Run();
+
+public class MyDashboardAuthorizationFilter : IDashboardAuthorizationFilter
+{
+    public bool Authorize([NotNull] DashboardContext context)
+    {
+        return true;
+    }
+}
